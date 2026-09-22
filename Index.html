@@ -1,0 +1,697 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>CBT → ABT Transformation — Technical Reference</title>
+<style>
+:root{
+  --bg:#08111f; --panel:#0f1b2d; --panel2:#13243a; --text:#ecf3fb; --muted:#9db0c8;
+  --line:#223650; --accent:#55b9ff; --accent2:#6de0b0; --warn:#ffd166; --danger:#ff7a8a;
+  --shadow:0 18px 50px rgba(0,0,0,.28); --radius:18px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:radial-gradient(circle at 75% 0%,#132640 0,#08111f 38%,#06101b 100%);color:var(--text);font:15px/1.55 Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+button{font:inherit}
+a{color:inherit}
+.container{max-width:1400px;margin:auto;padding:0 22px}
+.topbar{position:sticky;top:0;z-index:50;background:rgba(6,16,27,.86);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+.topbar-inner{display:flex;gap:16px;align-items:center;justify-content:space-between;padding:12px 0}
+.brand{font-weight:800;letter-spacing:.2px}.brand span{color:var(--accent)}
+.nav{display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end}.nav button,.mode button{
+  border:1px solid var(--line);background:#0d192a;color:#cbd8e8;padding:8px 10px;border-radius:10px;cursor:pointer
+}.nav button:hover,.mode button:hover,.nav button.active,.mode button.active{border-color:#3e668f;background:#13263d;color:#fff}
+.hero{padding:54px 0 34px}.hero-grid{display:grid;grid-template-columns:1.3fr .7fr;gap:24px}
+.eyebrow{font-size:12px;text-transform:uppercase;letter-spacing:.18em;color:var(--accent);font-weight:800}
+h1{font-size:clamp(34px,5vw,64px);line-height:1.02;margin:10px 0 14px;max-width:900px}
+h2{font-size:28px;margin:0 0 12px}.lead{color:#c8d5e5;font-size:18px;max-width:850px}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px}.chip{padding:7px 10px;border:1px solid var(--line);border-radius:999px;background:#0c1929;color:#c9d9eb}
+.hero-card,.card{background:linear-gradient(180deg,rgba(19,36,58,.94),rgba(11,24,41,.94));border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+.hero-card{padding:20px}.hero-card .big{font-size:42px;font-weight:850}.hero-card small{color:var(--muted)}
+.progress{height:8px;background:#0a1625;border-radius:999px;overflow:hidden;border:1px solid var(--line);margin-top:12px}.progress>div{height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .3s}
+section{padding:42px 0}.section-head{display:flex;align-items:end;justify-content:space-between;gap:20px;margin-bottom:18px}.section-head p{margin:0;color:var(--muted)}
+.togglebar{display:flex;gap:7px;flex-wrap:wrap}.mode{display:flex;gap:8px;flex-wrap:wrap}
+.mode-label{color:var(--muted);padding:8px 3px}
+.architecture{display:grid;grid-template-columns:1fr .9fr 1fr;gap:14px;align-items:stretch}.arch-col{padding:18px}.arch-col h3{margin:0 0 12px}.arch-left{border-color:#28415f}.arch-mid{border-color:#315567}.arch-right{border-color:#2b5c51}
+.flow{display:flex;flex-direction:column;gap:9px}.node{position:relative;border:1px solid var(--line);background:#0b1828;border-radius:13px;padding:12px 13px;cursor:pointer;transition:.18s}.node:hover{transform:translateY(-2px);border-color:#3a628a}.node .kicker{display:block;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.08em}.node strong{display:block;margin-top:3px}.arrow{display:flex;align-items:center;justify-content:center;color:#6083a6;font-weight:900;height:9px}
+.transform{display:flex;flex-direction:column;justify-content:center;gap:10px;padding:20px}.transform-line{height:1px;background:linear-gradient(90deg,transparent,#31526f,transparent);margin:4px 0}
+.pipeline{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}.step{padding:12px;border:1px solid #29445d;border-radius:13px;background:#0a1828;cursor:pointer}.step:hover{border-color:#4c84af}.step b{display:flex;gap:9px;align-items:center}.num{width:27px;height:27px;border-radius:8px;display:grid;place-items:center;background:#132b45;color:#9dd7ff;font-weight:800}.step small{display:block;color:var(--muted);margin-top:5px}
+.callout{padding:16px;border-radius:14px;border:1px solid #3b5570;background:#0d1b2d}.callout.good{border-color:#315e4f}.callout.warn{border-color:#5a4a27}.callout strong{display:block;margin-bottom:4px}
+.flowline{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.flow-pill{padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:#0b1828}.flow-arrow{color:#587593;font-weight:900}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.mini{padding:16px}.mini h4{margin:0 0 7px}.mini p{margin:0;color:#b7c6d8}
+table{width:100%;border-collapse:separate;border-spacing:0;overflow:hidden;border:1px solid var(--line);border-radius:16px;background:#0b1828}th,td{padding:13px 14px;border-bottom:1px solid var(--line);vertical-align:top}th{text-align:left;color:#c5d7ea;background:#101f33;font-size:12px;text-transform:uppercase;letter-spacing:.07em}tr:last-child td{border-bottom:0}tbody tr{cursor:pointer}tbody tr:hover td{background:#0d1d31}
+.badge{display:inline-block;padding:4px 8px;border-radius:999px;font-size:11px;border:1px solid var(--line);color:#bdd1e7}
+.layer-list{display:flex;flex-direction:column;gap:8px}.layer{display:grid;grid-template-columns:170px 1fr auto;gap:12px;align-items:center;padding:13px;border:1px solid var(--line);border-radius:13px;background:#0b1828;cursor:pointer}.layer:hover{border-color:#4d7fa8}.layer .bar{height:8px;border-radius:99px;background:#172b42;overflow:hidden}.layer .bar span{display:block;height:100%;background:linear-gradient(90deg,#3d8bff,#6de0b0)}
+.map{display:grid;grid-template-columns:1fr 120px 1fr;gap:14px;align-items:center}.map-col{display:flex;flex-direction:column;gap:8px}.map-item{padding:12px;border:1px solid var(--line);border-radius:12px;background:#0b1828}.map-arrow{display:flex;flex-direction:column;gap:9px;align-items:center;color:#6e91b2}.map-arrow span{font-size:12px;color:#91a7bf}
+.risk-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.risk{padding:13px;border:1px solid #473c2c;border-radius:12px;background:#18170f;color:#ead7a7}.risk b{display:block;color:#ffd166;margin-bottom:3px}
+.bus-wrap{position:relative;padding:18px;border:1px solid var(--line);border-radius:18px;background:linear-gradient(135deg,#0c1929,#0b1d22)}.bus{height:160px;border-radius:28px;background:#d9e6f1;position:relative;margin:30px 18px 40px;box-shadow:inset 0 -15px 0 rgba(8,17,31,.12)}.bus .window{position:absolute;top:22px;width:48px;height:46px;background:#31506a;border-radius:8px}.bus .window:nth-child(1){left:30px}.bus .window:nth-child(2){left:95px}.bus .window:nth-child(3){left:160px}.bus .window:nth-child(4){right:150px}.bus .window:nth-child(5){right:85px}.bus .window:nth-child(6){right:20px}.hotspot{position:absolute;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;border:2px solid #fff;background:#133656;color:#fff;cursor:pointer;box-shadow:0 0 0 6px rgba(85,185,255,.12)}.hs1{left:8%;top:7%}.hs2{right:8%;top:16%}.hs3{left:44%;bottom:13%}.hs4{right:23%;bottom:16%}.hs5{left:15%;bottom:16%}.hs6{right:48%;top:8%}
+.diagnostic{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}.branch{padding:16px;border-radius:15px;border:1px solid var(--line);background:#0b1828}.branch.device{border-color:#4a3440}.branch.integration{border-color:#33486a}.branch.fare{border-color:#345248}
+.testflow{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}.testnode{padding:13px;border:1px solid var(--line);border-radius:13px;background:#0b1828;cursor:pointer}.testnode:hover{border-color:#4c84af}.testnode b{display:block}.testnode small{color:var(--muted)}
+.checklist{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.check{padding:14px;border:1px solid var(--line);border-radius:13px;background:#0b1828}.check h4{margin:0 0 8px}.check ul{padding-left:18px;margin:0;color:#b9c7d7}
+.quote{font-size:18px;line-height:1.65;padding:22px;border-left:4px solid var(--accent);background:#0c1929;border-radius:12px}
+.footer{padding:36px 0 60px;color:#7f95ad}.kbd{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;background:#091521;border:1px solid var(--line);padding:2px 6px;border-radius:6px}
+.modal{position:fixed;inset:0;background:rgba(2,7,13,.73);display:none;align-items:center;justify-content:center;padding:20px;z-index:80}.modal.open{display:flex}.modal-card{max-width:760px;width:100%;max-height:82vh;overflow:auto;background:#0d1a2b;border:1px solid #2a4561;border-radius:18px;box-shadow:0 24px 90px rgba(0,0,0,.45);padding:22px}.modal-top{display:flex;justify-content:space-between;gap:15px;align-items:flex-start}.close{border:1px solid var(--line);background:#0a1523;color:#d8e5f2;border-radius:9px;padding:7px 10px;cursor:pointer}.modal-card h3{font-size:24px;margin:0}.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}.detail-grid .d{padding:12px;border:1px solid var(--line);border-radius:12px;background:#0a1727}.d b{display:block;margin-bottom:4px;color:#cfe3f6}.d span{color:#aebfd1}
+.smallnote{color:var(--muted);font-size:12px}
+.hide{display:none !important}
+@media (max-width:1000px){
+  .hero-grid,.architecture,.map{grid-template-columns:1fr}
+  .pipeline,.grid,.grid-4,.testflow,.checklist,.risk-grid,.diagnostic{grid-template-columns:repeat(2,1fr)}
+}
+@media (max-width:680px){
+  .pipeline,.grid,.grid-4,.testflow,.checklist,.risk-grid,.diagnostic,.detail-grid{grid-template-columns:1fr}
+  .layer{grid-template-columns:1fr}
+  .nav{display:none}
+  h1{font-size:38px}
+}
+
+/* Professional client-presentation theme */
+:root{
+  --bg:#f5f7f9;
+  --panel:#ffffff;
+  --panel2:#f0f3f6;
+  --text:#1b2733;
+  --muted:#667788;
+  --line:#d7dee6;
+  --accent:#e30613;      /* primary accent */
+  --accent2:#009bd8;     /* secondary accent */
+  --warn:#b97800;
+  --danger:#c53b45;
+  --shadow:0 10px 30px rgba(31,50,70,.08);
+  --radius:14px;
+}
+html{background:var(--bg)}
+body{
+  background:
+    linear-gradient(180deg,#fff 0,#f5f7f9 220px,#f5f7f9 100%);
+  color:var(--text);
+  font-family:Arial,Helvetica,sans-serif;
+}
+body:before{
+  content:"";display:block;height:5px;background:var(--accent);position:fixed;top:0;left:0;right:0;z-index:70;
+}
+.topbar{
+  background:rgba(255,255,255,.95);
+  border-bottom:1px solid var(--line);
+  box-shadow:0 3px 18px rgba(0,0,0,.04);
+  margin-top:5px;
+}
+.topbar-inner{padding:11px 0}
+.brand{color:#172433;font-weight:800;letter-spacing:.2px}
+.brand span{color:var(--accent)}
+.brand:after{content:""}
+.nav button,.mode button{
+  background:#fff;color:#344453;border-color:#cfd8e1;
+}
+.nav button:hover,.mode button:hover,.nav button.active,.mode button.active{
+  background:#fff5f6;color:var(--accent);border-color:#e30613;
+}
+.container{max-width:1440px}
+.hero{padding:58px 0 34px}
+.hero h1{color:#182635}
+.hero h1:after{
+  content:"";display:block;width:86px;height:5px;margin-top:22px;background:var(--accent);clip-path:polygon(0 0,100% 0,82% 100%,0 100%);
+}
+.lead{color:#566676}
+.eyebrow{color:var(--accent);font-weight:800}
+.chip{background:#fff;color:#465667;border-color:#d3dce4}
+.hero-card,.card{
+  background:#fff;
+  border-color:#d4dce4;
+  box-shadow:var(--shadow);
+}
+.hero-card{position:relative;overflow:hidden}
+.hero-card:before{content:"";position:absolute;top:0;right:0;width:90px;height:90px;background:var(--accent);clip-path:polygon(32% 0,100% 0,100% 68%);opacity:.95}
+.hero-card:after{content:"";position:absolute;bottom:0;right:0;width:62px;height:62px;background:var(--accent2);clip-path:polygon(100% 0,100% 100%,0 100%);opacity:.9}
+.hero-card .big{color:#182635}
+.progress{background:#e8edf2;border-color:#d3dce4}
+.progress>div{background:linear-gradient(90deg,var(--accent),var(--accent2))}
+.arch-left{border-color:#d7dee6}
+.arch-mid{border-color:#d7dee6}
+.arch-right{border-color:#b9dbe8}
+.node,.step,.layer,.map-item,.flow-pill,.branch,.testnode,.check,.mini.card{
+  background:#fbfcfd;color:var(--text);border-color:#d8e0e7;
+}
+.node:hover,.step:hover,.layer:hover,.testnode:hover{border-color:#9eb5c7;box-shadow:0 6px 18px rgba(31,50,70,.07)}
+.node .kicker,.step small,.smallnote{color:#718293}
+.num{background:#fff0f1;color:var(--accent);border:1px solid #f1c8cc}
+.arrow,.flow-arrow{color:#8193a6}
+.transform-line{background:linear-gradient(90deg,transparent,#cdd7e0,transparent)}
+.callout{background:#f7f9fb;border-color:#d8e0e7;color:#334554}
+.callout.good{background:#f3fbfc;border-color:#b7dce5}
+.callout.warn{background:#fff9ed;border-color:#ead8ad}
+.grid .mini h4,.mini h4{color:#253544}
+table{background:#fff;border-color:#d7dee6}
+th{background:#182735;color:#fff;border-color:#182735}
+td{border-bottom-color:#e1e6eb}
+tbody tr:hover td{background:#f7fafc}
+.badge{background:#f8fafc;color:#5d7082;border-color:#d7dee6}
+.layer .bar{background:#e8edf2}.layer .bar span{background:linear-gradient(90deg,var(--accent),var(--accent2))}
+.map-arrow{color:var(--accent2)}
+.risk{background:#fffaf1;border-color:#e8d6ac;color:#73550b}.risk b{color:#9b6500}
+.bus-wrap{background:linear-gradient(135deg,#ffffff,#f2f8fb);border-color:#d7dee6}
+.bus{background:#eef2f5;box-shadow:inset 0 -15px 0 rgba(24,39,53,.05);border:1px solid #cbd5de}
+.bus .window{background:#46657e}
+.hotspot{background:var(--accent);border-color:#fff;box-shadow:0 0 0 6px rgba(227,6,19,.10)}
+.branch.device{border-color:#e4c2c8;background:#fff8f9}.branch.integration{border-color:#c9d9eb;background:#f7faff}.branch.fare{border-color:#bfe0d7;background:#f7fcfa}
+.quote{background:#fbfcfd;border-left-color:var(--accent);color:#263746}
+.footer{color:#7b8997}
+.modal{background:rgba(18,29,40,.48)}
+.modal-card{background:#fff;border-color:#d0d9e1;box-shadow:0 24px 80px rgba(0,0,0,.25)}
+.close{background:#fff;color:#445464;border-color:#cfd8e1}.close:hover{border-color:var(--accent);color:var(--accent)}
+.detail-grid .d{background:#fbfcfd;border-color:#dbe2e8}.d b{color:#304251}.d span{color:#66798a}
+.section-head p{color:#6b7b8b}
+h2{color:#1a2a38}
+/* red-chevron motif */
+.section-head h2:before{content:"";display:inline-block;width:8px;height:24px;background:var(--accent);margin-right:10px;vertical-align:-3px;clip-path:polygon(0 0,100% 0,76% 100%,0 100%)}
+/* energetic red/blue mode distinction */
+.arch-left h3{color:#9b222b}.arch-right h3{color:#0078a9}.arch-mid .eyebrow{color:#b12630}
+button:focus-visible,.node:focus-visible,.step:focus-visible,.layer:focus-visible{outline:3px solid rgba(0,155,216,.3);outline-offset:2px}
+
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="container topbar-inner">
+    <div class="brand">CBT <span>→</span> ABT <span>Playbook</span></div>
+    <div class="nav">
+      <button data-scroll="overview">Overview</button>
+      <button data-scroll="transaction">Tap Flow</button>
+      <button data-scroll="migration">Migration</button>
+      <button data-scroll="bus">Bus</button>
+      <button data-scroll="multimodal">Bus→Metro</button>
+      <button data-scroll="testing">Testing</button>
+      <button data-scroll="summary">Summary</button>
+    </div>
+  </div>
+</header>
+
+<main>
+<section class="hero" id="overview">
+  <div class="container">
+    <div class="hero-grid">
+      <div>
+        <h1>From <span style="color:var(--accent)">card-centric</span> ticketing to <span style="color:var(--accent2)">account-centric</span> ticketing.</h1>
+        <p class="lead">An interactive architecture and migration playbook for understanding CBT → ABT transformation: devices, data, accounts, fare processing, payment, reconciliation, coexistence, testing and Bus-specific delivery risks.</p>
+        <div class="chips">
+          <span class="chip">Architecture</span><span class="chip">Migration</span><span class="chip">Bus</span><span class="chip">Integration</span><span class="chip">Testing</span><span class="chip">Reconciliation</span>
+        </div>
+      </div>
+      <div class="hero-card">
+        <div class="smallnote">Mental model</div>
+        <div class="big">Card → Account</div>
+        <div style="color:#b8cadc">Not a card replacement. A change in where customer, journey and fare intelligence is managed.</div>
+        <div class="progress"><div id="heroProgress"></div></div>
+        <div class="smallnote" id="progressText" style="margin-top:8px">Start exploring</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+<div class="container">
+  <div class="section-head">
+    <div><h2>Before → Transformation → After</h2><p>Click any box for technical detail, risk and the Technical Lead's control point.</p></div>
+    <div class="mode">
+      <span class="mode-label">Depth</span>
+      <button class="active" data-depth="basic">BASIC</button><button data-depth="interview">PRACTICAL</button><button data-depth="deep">DEEP TECHNICAL</button>
+      <span class="mode-label">Focus</span><button class="active" data-focus="all">ALL</button><button data-focus="bus">BUS FOCUS</button>
+    </div>
+  </div>
+
+  <div class="architecture">
+    <div class="card arch-col arch-left">
+      <h3>OLD CBT</h3>
+      <div class="smallnote">Card-centric model</div>
+      <div class="flow" style="margin-top:14px">
+        <div class="node" data-key="cbt-passenger"><span class="kicker">1</span><strong>Passenger</strong><small>Customer presents transit credential</small></div><div class="arrow">↓</div>
+        <div class="node" data-key="cbt-card"><span class="kicker">2</span><strong>Transit Card</strong><small>Value / product / travel rights may be card-associated</small></div><div class="arrow">↓</div>
+        <div class="node" data-key="cbt-validator"><span class="kicker">3</span><strong>Validator / Gate</strong><small>Significant field-side processing</small></div><div class="arrow">↓</div>
+        <div class="node" data-key="cbt-processing"><span class="kicker">4</span><strong>CBT Processing</strong><small>Card-centric transaction logic</small></div><div class="arrow">↓</div>
+        <div class="node" data-key="cbt-central"><span class="kicker">5</span><strong>Central System</strong><small>Collection, monitoring and reporting</small></div><div class="arrow">↓</div>
+        <div class="node" data-key="cbt-recon"><span class="kicker">6</span><strong>Reporting / Reconciliation</strong></div>
+      </div>
+      <div class="callout warn" style="margin-top:14px"><strong>CBT mental model</strong> The card is central to the transaction, and more value/product intelligence can sit in the card/field ecosystem.</div>
+    </div>
+
+    <div class="card transform">
+      <div class="eyebrow">Transformation engine</div>
+      <div class="smallnote">15 control stages</div>
+      <div class="transform-line"></div>
+      <div class="pipeline" id="pipeline"></div>
+      <div class="transform-line"></div>
+      <div class="callout good"><strong>Core principle</strong> Move the system from “what does the card carry?” toward “which account/credential is being presented, and how is the journey/fare processed centrally?”</div>
+    </div>
+
+    <div class="card arch-col arch-right">
+      <h3>NEW ABT</h3>
+      <div class="smallnote">Account-centric model</div>
+      <div class="flow" style="margin-top:14px">
+        <div class="node" data-key="abt-credential"><span class="kicker">1</span><strong>Passenger Credential</strong><small>Card / mobile / payment credential / QR where applicable</small></div><div class="arrow">↓</div>
+        <div class="node" data-key="abt-validator"><span class="kicker">2</span><strong>Bus Validator</strong><small>Secure validation + event capture</small></div><div class="arrow">↓</div>
+        <div class="node" data-key="abt-event"><span class="kicker">3</span><strong>Validation Event</strong><small>Credential, device, time, event context</small></div><div class="arrow">↓</div>
+        <div class="node" data-key="abt-network"><span class="kicker">4</span><strong>Communication</strong><small>Transmit or securely queue for later sync</small></div><div class="arrow">↓</div>
+        <div class="node" data-key="abt-platform"><span class="kicker">5</span><strong>ABT Central Platform</strong><small>Account + journey + fare + payment integration</small></div>
+      </div>
+      <div class="grid" style="grid-template-columns:repeat(2,1fr);margin-top:10px">
+        <div class="mini card" data-key="abt-account"><h4>Account Mgmt</h4><p>Customer/account state and relationships</p></div>
+        <div class="mini card" data-key="abt-cred"><h4>Credential Mgmt</h4><p>Credentials linked to account</p></div>
+        <div class="mini card" data-key="abt-journey"><h4>Journey Processing</h4><p>Events combined into journey context</p></div>
+        <div class="mini card" data-key="abt-fare"><h4>Fare Engine</h4><p>Approved fare and transfer logic</p></div>
+        <div class="mini card" data-key="abt-payment"><h4>Payment / Account</h4><p>Charge/account handling as designed</p></div>
+        <div class="mini card" data-key="abt-recon"><h4>Reconciliation</h4><p>Transaction and revenue integrity</p></div>
+      </div>
+      <div class="callout good" style="margin-top:14px"><strong>ABT mental model</strong> The credential mainly identifies the account; account, journey and fare processing are managed centrally.</div>
+    </div>
+  </div>
+</div>
+</section>
+
+<section id="transaction">
+<div class="container">
+  <div class="section-head"><div><h2>What actually happens when a passenger taps?</h2><p>Click each stage to see the technical role, risks and control points.</p></div></div>
+  <div class="card" style="padding:18px"><div class="flowline" id="tapFlow"></div></div>
+  <div class="grid" id="tapCards" style="margin-top:14px"></div>
+</div>
+</section>
+
+<section>
+<div class="container">
+  <div class="section-head"><div><h2>CBT vs ABT — technical comparison</h2><p>Click a row to expand the practical implication.</p></div></div>
+  <div class="card" style="padding:0;overflow:hidden">
+    <table><thead><tr><th>Dimension</th><th>CBT</th><th>ABT</th></tr></thead><tbody id="compareBody"></tbody></table>
+  </div>
+</div>
+</section>
+
+<section id="migration">
+<div class="container">
+  <div class="section-head"><div><h2>CBT → ABT migration workstreams</h2><p>Click a layer. Think of each one as a technical workstream, not a single “card migration” activity.</p></div></div>
+  <div class="card" style="padding:18px"><div class="layer-list" id="layers"></div></div>
+</div>
+</section>
+
+<section>
+<div class="container">
+  <div class="section-head"><div><h2>Data migration — the actual mapping problem</h2><p>Old data structures must be understood, transformed, validated and reconciled.</p></div></div>
+  <div class="map">
+    <div class="card" style="padding:16px"><h3>OLD CBT</h3><div class="map-col">
+      <div class="map-item">Card ID</div><div class="map-item">Balance</div><div class="map-item">Product</div><div class="map-item">Entitlement</div><div class="map-item">Card Status</div><div class="map-item">Transaction</div>
+    </div></div>
+    <div class="map-arrow"><div style="font-size:22px">→</div><span>mapping / transformation / validation</span></div>
+    <div class="card" style="padding:16px"><h3>NEW ABT</h3><div class="map-col">
+      <div class="map-item">Account ID</div><div class="map-item">Credential</div><div class="map-item">Account Balance / Wallet</div><div class="map-item">Entitlement</div><div class="map-item">Credential Status</div><div class="map-item">Journey / Transaction Event</div>
+    </div></div>
+  </div>
+  <div class="grid" style="margin-top:14px" id="dataCards"></div>
+</div>
+</section>
+
+<section>
+<div class="container">
+  <div class="section-head"><div><h2>Coexistence — the hard part</h2><p>Old CBT + new ABT must be controlled during transition.</p></div></div>
+  <div class="card" style="padding:20px">
+    <div class="flowline" style="justify-content:center">
+      <div class="flow-pill">OLD CBT SYSTEM</div><div class="flow-arrow">+</div><div class="flow-pill">NEW ABT SYSTEM</div><div class="flow-arrow">→</div><div class="flow-pill">CONTROLLED COEXISTENCE</div><div class="flow-arrow">→</div><div class="flow-pill">PHASED MIGRATION</div><div class="flow-arrow">→</div><div class="flow-pill">FINAL CUTOVER</div>
+    </div>
+    <div class="risk-grid" style="margin-top:16px">
+      <div class="risk"><b>Duplicate transactions</b>same event processed twice</div>
+      <div class="risk"><b>Balance inconsistency</b>value appears differently across systems</div>
+      <div class="risk"><b>Account mapping error</b>credential linked to wrong account</div>
+      <div class="risk"><b>Entitlement mismatch</b>pass/concession not preserved</div>
+      <div class="risk"><b>Missing transactions</b>event never reaches central platform</div>
+      <div class="risk"><b>Incorrect fare</b>wrong rule/version/journey context</div>
+      <div class="risk"><b>Reconciliation difference</b>transaction vs financial records don't match</div>
+      <div class="risk"><b>Ownership confusion</b>unclear whether CBT or ABT is authoritative</div>
+    </div>
+    <div class="callout good" style="margin-top:16px"><strong>Why coexistence matters</strong> Passenger service must continue, customer value must remain intact, transactions must remain traceable, and revenue must reconcile.</div>
+  </div>
+</div>
+</section>
+
+<section id="bus">
+<div class="container">
+  <div class="section-head"><div><h2>Bus-specific ABT challenges</h2><p>Click the hotspots on the bus. These are the issues that make mobile ticketing different from fixed Metro equipment.</p></div></div>
+  <div class="bus-wrap">
+    <div class="bus">
+      <div class="window"></div><div class="window"></div><div class="window"></div><div class="window"></div><div class="window"></div><div class="window"></div>
+    </div>
+    <button class="hotspot hs1" data-bus="moving">1</button>
+    <button class="hotspot hs2" data-bus="network">2</button>
+    <button class="hotspot hs3" data-bus="offline">3</button>
+    <button class="hotspot hs4" data-bus="device">4</button>
+    <button class="hotspot hs5" data-bus="maintenance">5</button>
+    <button class="hotspot hs6" data-bus="time">6</button>
+    <div class="grid" style="margin-top:18px">
+      <div class="mini card"><h4>Mobile environment</h4><p>Vehicle moves through coverage variations; field conditions vary.</p></div>
+      <div class="mini card"><h4>Device management</h4><p>Remote configuration, firmware, health monitoring and deployment control matter at fleet scale.</p></div>
+      <div class="mini card"><h4>Operational resilience</h4><p>Offline operation, transaction storage, recovery and reconciliation must be explicit.</p></div>
+    </div>
+  </div>
+</div>
+</section>
+
+<section>
+<div class="container">
+  <div class="section-head"><div><h2>Offline operation — technical chain</h2><p>No universal offline duration: use approved business rules and risk limits.</p></div></div>
+  <div class="card" style="padding:18px">
+    <div class="flowline">
+      <div class="flow-pill">Validator</div><span class="flow-arrow">→</span>
+      <div class="flow-pill">Approved local rules / config</div><span class="flow-arrow">→</span>
+      <div class="flow-pill">Secure local storage</div><span class="flow-arrow">→</span>
+      <div class="flow-pill">Network restored</div><span class="flow-arrow">→</span>
+      <div class="flow-pill">Synchronisation</div><span class="flow-arrow">→</span>
+      <div class="flow-pill">Duplicate protection</div><span class="flow-arrow">→</span>
+      <div class="flow-pill">Reconciliation</div>
+    </div>
+  </div>
+</div>
+</section>
+
+<section id="multimodal">
+<div class="container">
+  <div class="section-head"><div><h2>Multimodal: Bus → Metro wrong-fare troubleshooting</h2><p>Trace the event chain. Don't jump directly to “backend issue.”</p></div></div>
+  <div class="card" style="padding:18px"><div class="flowline" id="wrongFareFlow"></div></div>
+  <div class="diagnostic" style="margin-top:14px">
+    <div class="branch device"><h3>DEVICE</h3><p>Wrong tap event, missing event, duplicate event, incorrect device data, timing issue.</p></div>
+    <div class="branch integration"><h3>INTEGRATION</h3><p>Event not received, wrong mapping, interface transformation issue, sequencing issue.</p></div>
+    <div class="branch fare"><h3>FARE PROCESSING</h3><p>Wrong rule version, journey construction or approved fare logic applied incorrectly.</p></div>
+  </div>
+  <div class="card" style="padding:16px;margin-top:14px">
+    <h3 style="margin-top:0">Diagnostic order</h3>
+    <div class="grid-4" id="diagnosticSteps"></div>
+  </div>
+</div>
+</section>
+
+<section>
+<div class="container">
+  <div class="section-head"><div><h2>Open loop + ABT</h2><p>Keep the concepts separate.</p></div></div>
+  <div class="architecture">
+    <div class="card mini"><h3>ABT</h3><p style="font-size:20px;color:#9fe0ff">Ticketing architecture</p><p>The account, journey and fare-processing model is centrally managed.</p></div>
+    <div class="card mini" style="display:grid;place-items:center;text-align:center"><div style="font-size:44px">+</div><p style="margin:0;color:var(--muted)">Can work together</p></div>
+    <div class="card mini"><h3>Open loop</h3><p style="font-size:20px;color:#9fe0c4">Payment / credential approach</p><p>Allows bank-issued payment credentials or digital wallets to be used, subject to the target architecture.</p></div>
+  </div>
+  <div class="grid" style="margin-top:14px">
+    <div class="mini card"><h4>Closed-loop credential</h4><p>Transit-issued credential.</p></div>
+    <div class="mini card"><h4>Open-loop credential</h4><p>Bank-issued payment credential / digital wallet.</p></div>
+    <div class="mini card"><h4>Key distinction</h4><p>ABT is the ticketing architecture; open loop is the payment / credential approach. They can work together but are not the same thing.</p></div>
+  </div>
+</div>
+</section>
+
+<section id="testing">
+<div class="container">
+  <div class="section-head"><div><h2>Testing & commissioning</h2><p>Click any test stage to see objective, example, evidence and acceptance implication.</p></div></div>
+  <div class="card" style="padding:18px"><div class="testflow" id="testFlow"></div></div>
+</div>
+</section>
+
+<section>
+<div class="container">
+  <div class="section-head"><div><h2>Technical Lead control points</h2><p>The control loop behind vendor assurance and client recommendation.</p></div></div>
+  <div class="card" style="padding:18px"><div class="flowline" style="justify-content:center" id="controlFlow"></div></div>
+</div>
+</section>
+
+<section>
+<div class="container">
+  <div class="section-head"><div><h2>Reconciliation — financial control loop</h2><p>Follow the money and transaction trace from validation to revenue.</p></div></div>
+  <div class="card" style="padding:18px"><div class="flowline" style="justify-content:center" id="reconFlow"></div></div>
+  <div class="grid" style="margin-top:14px">
+    <div class="mini card"><h4>Missing event</h4><p>Validation exists in the field but not in central processing.</p></div>
+    <div class="mini card"><h4>Duplicate event</h4><p>Same event appears more than once.</p></div>
+    <div class="mini card"><h4>Wrong fare</h4><p>Journey or fare result doesn't match the approved rules.</p></div>
+    <div class="mini card"><h4>Failed payment</h4><p>Payment/account posting exception.</p></div>
+    <div class="mini card"><h4>Balance mismatch</h4><p>Opening/migrated value doesn't reconcile.</p></div>
+    <div class="mini card"><h4>Migration exception</h4><p>Source data cannot be mapped cleanly to target state.</p></div>
+  </div>
+</div>
+</section>
+
+<section>
+<div class="container">
+  <div class="section-head"><div><h2>CBT → ABT migration master checklist</h2><p>Expandable checklist for practical delivery and technical assurance.</p></div></div>
+  <div class="checklist" id="checklist"></div>
+</div>
+</section>
+
+<section id="summary">
+<div class="container">
+  <div class="section-head"><div><h2>Summary</h2></div></div>
+  <div class="quote">
+    “The fundamental change is moving from a card-centric model to an account-centric model. In the existing CBT model, the card and field equipment carry more of the value and product logic. In ABT, the credential mainly identifies the account, while account, journey and fare processing are managed centrally.<br><br>
+    For migration, I would first assess the existing cards, products, balances, entitlements, devices and interfaces. Then define the target architecture, data mapping and coexistence strategy. After that, I would validate the migration through testing, controlled pilots and phased rollout, while monitoring transaction integrity, fare calculation and revenue reconciliation.<br><br>
+    The key objective is to complete the transformation without disrupting passenger service and without losing customer, transaction or revenue integrity.”
+  </div>
+  <div class="grid" style="margin-top:14px">
+    <div class="mini card"><h4>Final mental model</h4><p><b>Customer → Credential → Validator → Event → Account → Journey → Fare → Payment → Reconciliation.</b></p></div>
+  </div>
+</div>
+</section>
+
+</main>
+
+<footer class="footer">
+<div class="container">
+  <div><b>CBT → ABT Transformation & Migration Playbook</b> · Offline single-file artifact</div>
+  <div class="smallnote" style="margin-top:6px">Technical learning playbook focused on CBT → ABT transformation, Bus ticketing and system assurance.</div>
+</div>
+</footer>
+
+<div class="modal" id="modal" aria-hidden="true">
+  <div class="modal-card">
+    <div class="modal-top"><div><div class="eyebrow" id="modalEyebrow"></div><h3 id="modalTitle"></h3></div><button class="close" id="modalClose">Close</button></div>
+    <p id="modalIntro" style="color:#bdcbda"></p>
+    <div class="detail-grid" id="modalGrid"></div>
+  </div>
+</div>
+
+<script>
+const DETAILS = {
+  "cbt-passenger": {title:"Passenger", eyebrow:"CBT", intro:"The passenger presents the transit credential that is central to the card-based journey.", what:"Passenger uses a transit-issued credential.", why:"The credential is tightly associated with the travel value/product model.", checks:"Card status, credential validity, available product/value.", risk:"Invalid or inconsistent card state.", verify:"Confirm field validation behavior against the approved CBT requirements.", question:"How does the card-based transaction model differ from ABT?" },
+  "cbt-card": {title:"Transit Card", eyebrow:"CBT", intro:"In a card-centric model, the card can hold value, products or travel rights.", what:"Stores or represents key travel value/product state.", why:"The field ecosystem can depend heavily on what is carried on the card.", checks:"Card data structure, value, products, status, security.", risk:"Card data inconsistency or corruption.", verify:"Trace card state through the transaction lifecycle.", question:"What changes when the card stops being the main source of account value?" },
+  "cbt-validator": {title:"Validator / Gate", eyebrow:"CBT", intro:"Field equipment performs substantial local validation and transaction processing.", what:"Reads card and applies card-centric logic.", why:"It is a major processing point in the CBT model.", checks:"Reader, rules, card update, transaction capture.", risk:"Device/configuration issue.", verify:"Validate device behavior through field and integration testing.", question:"What would you change in the validator for an ABT deployment?" },
+  "cbt-processing": {title:"CBT Processing", eyebrow:"CBT", intro:"The card and field device ecosystem carries more processing responsibility.", what:"Card-centric transaction handling.", why:"Supports immediate local processing and card updates.", checks:"Business rules, card update, transaction integrity.", risk:"Mismatch between card and central records.", verify:"Trace transaction before and after central ingestion.", question:"What is the operational trade-off versus central ABT processing?" },
+  "cbt-central": {title:"Central System", eyebrow:"CBT", intro:"Central functions collect, monitor and reconcile transactions from the field.", what:"Collects transaction data and supports reporting/reconciliation.", why:"Provides oversight and financial/system control.", checks:"Data completeness, interfaces, reports.", risk:"Unreconciled field-to-central transactions.", verify:"Compare field records with central records.", question:"What becomes more important in the ABT central platform?" },
+  "cbt-recon": {title:"Reporting / Reconciliation", eyebrow:"CBT", intro:"Financial and operational records are checked against captured transactions.", what:"Compare transaction and financial records.", why:"Protects revenue integrity.", checks:"Completeness, duplication, exceptions.", risk:"Revenue mismatch.", verify:"Evidence-based reconciliation and exception closure.", question:"How would you prove the system is financially consistent?" },
+  "abt-credential": {title:"Passenger Credential", eyebrow:"ABT", intro:"The credential mainly identifies the customer account; it can be a transit credential or other supported credential.", what:"Identifies the account/customer context.", why:"Separates the identity/credential from centrally managed account information.", checks:"Credential validity, mapping, status, security.", risk:"Wrong account mapping or stale status.", verify:"Check credential-to-account mapping and lifecycle rules.", question:"What is the difference between an account and a credential?" },
+  "abt-validator": {title:"Bus Validator", eyebrow:"ABT", intro:"The validator becomes a secure validation and event-capture point, with controlled offline capability.", what:"Reads credential, performs approved local checks and creates an event.", why:"Buses have mobile connectivity and field constraints.", checks:"Reader, security, local rules, storage, sync.", risk:"Offline/recovery failure.", verify:"Test online, offline, recovery and duplicate protection.", question:"What happens when the validator loses connectivity?" },
+  "abt-event": {title:"Validation Event", eyebrow:"ABT", intro:"A validation event captures the facts the central system needs for processing.", what:"Credential/device/time/event context is recorded.", why:"Journey and fare processing depend on trustworthy events.", checks:"Timestamp, credential ID, device ID, sequence, event type.", risk:"Missing, duplicate or incorrect event.", verify:"Trace event from creation to central processing.", question:"What data do you need to troubleshoot a wrong fare?" },
+  "abt-network": {title:"Communication", eyebrow:"ABT", intro:"The event is transmitted to the central system or securely queued if the vehicle is offline.", what:"Moves event data between Bus and central platform.", why:"Mobile connectivity is variable.", checks:"Latency, queueing, retry, acknowledgement, recovery.", risk:"Lost/out-of-order/duplicate messages.", verify:"Test connection loss and recovery.", question:"How do you preserve transaction integrity during outages?" },
+  "abt-platform": {title:"ABT Central Platform", eyebrow:"ABT", intro:"The central platform is the control point for accounts, journeys, fare processing and integrations.", what:"Manages account/journey processing and interfaces.", why:"Moves the source of account and fare intelligence centrally.", checks:"Architecture, interfaces, scalability, availability, security.", risk:"Central processing bottleneck or integration failure.", verify:"Requirements traceability plus objective test evidence.", question:"How would you review a vendor's ABT architecture?" },
+  "abt-account": {title:"Account Management", eyebrow:"ABT", intro:"The account becomes the central customer state linked to one or more credentials.", what:"Manages account and credential relationships.", why:"Supports customer-centric service and credential lifecycle.", checks:"Mapping, status, customer data, entitlements.", risk:"Wrong account linkage.", verify:"Sample data migration and customer/account reconciliation.", question:"How do you migrate a card-centric customer into an account-centric model?" },
+  "abt-cred": {title:"Credential Management", eyebrow:"ABT", intro:"Credentials are managed as identifiers tied to accounts.", what:"Manage credential status and relationships.", why:"Credentials can change without necessarily changing the core account.", checks:"Activation, deactivation, replacement, mapping.", risk:"Old credential remains active incorrectly.", verify:"Test lifecycle and exception paths.", question:"How would you handle a lost or replaced credential?" },
+  "abt-journey": {title:"Journey Processing", eyebrow:"ABT", intro:"Validation events can be used to construct journey context across modes.", what:"Relates events to journeys.", why:"Transfer and multimodal fare rules need reliable event sequencing.", checks:"timestamps, event relationships, account mapping.", risk:"Missing/duplicate event produces wrong journey.", verify:"Trace end-to-end Bus→Metro events.", question:"How would you troubleshoot a wrong Bus-to-Metro fare?" },
+  "abt-fare": {title:"Fare Engine", eyebrow:"ABT", intro:"The fare-processing layer applies approved fare and transfer rules.", what:"Determines the applicable fare from journey context.", why:"Centralised fare intelligence supports multimodal and policy changes.", checks:"rule version, effective date, transfer logic, exceptions.", risk:"Incorrect rule/configuration.", verify:"Test fare scenarios and rule versioning.", question:"How do you isolate a fare-engine issue?" },
+  "abt-payment": {title:"Payment / Account Processing", eyebrow:"ABT", intro:"The charge is processed against the designed account/payment mechanism.", what:"Posts or processes the applicable charge.", why:"Links journey results to financial processing.", checks:"payment status, account posting, exceptions.", risk:"failed or duplicate payment.", verify:"End-to-end transaction-to-payment trace.", question:"What changes when open-loop payment is introduced?" },
+  "abt-recon": {title:"Reconciliation", eyebrow:"ABT", intro:"Transactions, fare results, payment/settlement and revenue records must remain consistent.", what:"Compares records across the chain.", why:"Protects revenue and customer value.", checks:"completeness, duplication, exceptions.", risk:"Financial mismatch.", verify:"Source-to-target and transaction-to-revenue reconciliation.", question:"How do you prove migration preserved value?" }
+};
+
+const PIPE = [
+["1","Existing System Assessment","Understand products, accounts, balances, devices, interfaces"],
+["2","Customer / Account Data","Identify data relationships and current-state quality"],
+["3","Product & Entitlement Mapping","Map passes, products and entitlements"],
+["4","Balance / Value Migration","Define how value moves without loss/duplication"],
+["5","Credential Mapping","Link old credentials to the target model"],
+["6","Device Assessment","Reuse, upgrade or replace field equipment"],
+["7","Target ABT Architecture","Define central account/journey/fare architecture"],
+["8","Interface / Integration Mapping","Map systems, data and message flows"],
+["9","Coexistence Strategy","Control old + new during transition"],
+["10","Testing & Validation","Test functions, integration and migration"],
+["11","Controlled Pilot","Prove the solution on a limited fleet"],
+["12","Phased Migration","Scale with go/no-go criteria"],
+["13","Reconciliation","Confirm transaction and revenue integrity"],
+["14","Cutover","Move operational authority to the target system"],
+["15","Legacy Decommissioning","Retire or archive legacy functions as approved"]
+];
+
+const TAP = [
+["Passenger presents credential","Credential enters the validator's reader.","Credential, presentation context","Wrong/invalid credential","Verify reader/security behavior","What exactly happens at the tap?"],
+["Validator reads credential","Reads the credential and performs approved local checks.","Credential/token, device state","Reader/configuration issue","Validate against device requirements","What is the validator's role in ABT?"],
+["Security / validity checks","Applies defined credential/security checks.","Credential state, local configuration","Stale/incorrect status","Verify approved rules and updates","What happens if the device is offline?"],
+["Validation event created","Creates an event with the data required for central processing.","Credential ID, device ID, timestamp, event context","Missing/duplicate/wrong event","Trace event creation and sequence","Which fields would you investigate?"],
+["Event transmitted","Sends to the central platform or stores securely for later sync.","Event payload, sequence, network state","Lost/out-of-order/duplicate transmission","Test retry, acknowledgement and recovery","How do you handle connectivity loss?"],
+["Account identified","Central platform maps credential to the account.","Credential-to-account mapping","Wrong account mapping","Validate mapping and exception rules","What is the difference between credential and account?"],
+["Journey processed","System relates validation events into the required journey context.","Events, timestamps, account","Missing/duplicate event","Trace journey construction","How would you troubleshoot Bus→Metro?"],
+["Fare rules applied","Approved fare/transfer logic is applied.","Fare-rule version, journey context","Wrong rule/version","Verify configuration and test cases","How do you identify fare logic problems?"],
+["Fare determined","System arrives at the charge/result.","Journey + fare result","Wrong charge","Compare expected vs actual","How do you prove the calculation is correct?"],
+["Account / payment processing","Charge is posted/processed according to design.","Account state/payment result","Failed or duplicate payment","Trace payment/account status","What changes in open loop?"],
+["Reconciliation / reporting","Transaction, fare and financial records are reconciled.","Transaction IDs, fare, payment, revenue","Mismatch/exception","Review exception reports and evidence","How do you protect revenue integrity?"]
+];
+
+const COMPARE = [
+["Source of account/value","More value/product state may be card-associated","Account state is managed centrally"],
+["Role of card","Carries more value/product/travel-right context","Credential mainly identifies account"],
+["Role of validator","Significant local/card-side processing","Secure validation + event capture with controlled offline capability"],
+["Fare processing","More field/card-centric","More centrally managed"],
+["Journey processing","More limited/local context","Central processing can combine events across modes"],
+["Offline behaviour","Can be more self-contained","Must be explicitly designed, stored securely and reconciled"],
+["Back-office dependency","Important for collection/reporting","Central platform is a core source of account/journey/fare intelligence"],
+["Customer account management","More card-centric","Account + credential relationship is central"],
+["Multi-modal processing","More fragmented by mode","Central journey/fare processing can support transfer logic"],
+["Payment model","Transit credential/value model","Can support closed-loop or open-loop payment models"],
+["Reconciliation","Field/card transactions vs central records","End-to-end journey/fare/payment/revenue reconciliation"],
+["Migration complexity","Current state","High: data + devices + interfaces + accounts + fare + testing + coexistence"]
+];
+
+const LAYERS = [
+["Customer","Card-centric customer state","Account-centric customer state","Customer/account data mapping","Incomplete customer data","Validate sample migration"],
+["Credential","Transit card is central","Credential linked to account","Credential mapping/lifecycle","Wrong or stale mapping","Activation/deactivation tests"],
+["Validator / Field Device","Card-centric local processing","Secure event capture + controlled offline","Hardware/firmware/configuration","Device incompatibility","Bench + field tests"],
+["Communication","Transaction transfer","Event transmission + secure queueing","Network and retry design","Missing/out-of-order events","Failure/recovery tests"],
+["Central ABT Platform","Central collection/reporting","Account/journey/fare processing","New platform configuration","Central bottleneck/integration failure","SIT + performance evidence"],
+["Journey / Fare Engine","Field/card-heavy logic","Central journey/fare logic","Rule/configuration mapping","Wrong fare or rule version","Scenario/regression tests"],
+["Payment","Stored value / transit model","Account or open-loop payment model","Payment integration","Failed/duplicate charge","End-to-end payment tests"],
+["Reconciliation","Transaction vs central records","Transaction → fare → payment → revenue","New control points","Revenue mismatch","Daily/periodic reconciliation evidence"],
+["Reporting / CRM","Legacy reporting","Customer-centric journey/account views","API/report migration","Incomplete history","Report comparison"],
+["Operations / Device Mgmt","Field maintenance","Fleet-scale remote management","Firmware/config migration","Fleet-wide deployment failure","Pilot + rollback evidence"]
+];
+
+const DATA_CARDS = [
+["Customer data","Clean and transform source records so the target account model can be created.","Data quality, duplicates, missing records","Exception report + sample validation"],
+["Account mapping","Map existing customer/card relationships into target account relationships.","Wrong account linkage","Source-to-target mapping test"],
+["Credential mapping","Translate old card identifiers/statuses into target credential relationships.","Wrong or stale credential status","Lifecycle and replacement tests"],
+["Balance migration","Move value with no loss, duplication or unexplained adjustment.","Balance mismatch","Opening vs migrated value reconciliation"],
+["Product migration","Map old product structures to target entitlements.","Invalid product mapping","Product-by-product test"],
+["Entitlement migration","Preserve remaining validity/rights according to approved rules.","Lost/changed entitlement","Sample customer validation"],
+["Transaction history","Decide what historical information must remain accessible.","Missing history","Report/record comparison"],
+["Exception handling","Define how records that cannot be cleanly mapped are handled.","Silent data loss","Exception queue + disposition evidence"]
+];
+
+const DIAG = ["Bus event","Metro event","Timestamp","Credential / account mapping","Event receipt","Missing / duplicate event","Fare-rule version","Journey processing","Fare calculation","Account/payment posting","Reconciliation"];
+
+const TESTS = [
+["FAT","Verify device meets the specification before deployment.","Validator/device test","Signed factory evidence","No shipment until exit criteria are met"],
+["SAT","Verify installed equipment in site conditions.","Connectivity/environment test","SAT records + snags","Site acceptance status"],
+["SIT","Verify end-to-end system interfaces.","Validator→ABT→payment flow","Integrated test evidence","Integration readiness"],
+["Migration Testing","Verify data conversion and target state.","Balance/account/product mapping","Source-target reconciliation","Migration readiness"],
+["Performance Testing","Verify system can handle expected demand.","Peak validation volume","Performance results","Capacity acceptance"],
+["Security Testing","Verify security controls behave as designed.","Credential/access/data protection","Test evidence + findings","Security closure"],
+["Offline / Recovery","Verify local storage and sync after outage.","Disconnect/reconnect test","Recovery and reconciliation evidence","Operational resilience"],
+["UAT","Verify business process meets acceptance needs.","Passenger/fare scenarios","UAT sign-off evidence","Business acceptance"],
+["Pilot","Prove solution on limited fleet.","Controlled buses/depots","Pilot KPI pack","Go/no-go"],
+["Phased Rollout","Scale with monitoring.","Wave-by-wave deployment","Deployment and exception reports","Progressive acceptance"],
+["Take Over","Verify contractual acceptance evidence is complete.","Defect closure + performance","Acceptance dossier","Formal takeover"]
+];
+
+const CHECKS = [
+["DISCOVER",["Inventory cards/products/accounts","Inventory devices/interfaces","Identify legacy dependencies"]],
+["DESIGN",["Target ABT architecture","Device/central integration","Fare/payment approach"]],
+["MAP",["Customer/account","Credential","Balance/product/entitlement"]],
+["BUILD / CONFIGURE",["Platform configuration","Device firmware/configuration","Rules and interfaces"]],
+["INTEGRATE",["End-to-end interfaces","Bus/Metro flows","Payment/reconciliation"]],
+["MIGRATE",["Data conversion","Balance/entitlement checks","Exception handling"]],
+["TEST",["Functional/integration","Migration/offline","Performance/security"]],
+["PILOT",["Limited buses/depots","Go/no-go criteria","Rollback preparedness"]],
+["MONITOR",["Transaction success","Device/system availability","Exceptions"]],
+["RECONCILE",["Transaction integrity","Payment/revenue","Migration source-to-target"]],
+["CUTOVER",["Cutover readiness","Operational acceptance","Controlled switch"]],
+["STABILISE",["Defect closure","KPI monitoring","Customer/financial exceptions"]],
+["DECOMMISSION",["Legacy dependencies cleared","Historical data retained as required","Formal closure"]]
+];
+
+const BUS = {
+moving:{title:"Mobile / moving environment",intro:"Buses are mobile assets, so the operating environment is less controlled than fixed Metro equipment.",checks:"Vehicle movement, field conditions, connectivity variability.",risk:"Intermittent service and distributed field incidents.",verify:"Test across representative routes/fleet conditions.",question:"What are the main differences between Bus and Metro ticketing?"},
+network:{title:"Variable network connectivity",intro:"Connectivity can vary across routes and coverage areas.",checks:"Latency, dropouts, queueing, recovery.",risk:"Delayed/missing event transmission.",verify:"Test online/offline transitions and synchronisation.",question:"What happens when the validator loses connectivity?"},
+offline:{title:"Offline operation",intro:"Offline behaviour must be explicitly defined by business rules and risk limits.",checks:"Local config, secure storage, queue, retries, duplicate protection, reconciliation.",risk:"Stale credential status or duplicate/missing events.",verify:"Disconnect/reconnect and recovery tests.",question:"Should everything work offline?"},
+device:{title:"Device availability / fleet management",intro:"Thousands of distributed devices require central monitoring and controlled deployment.",checks:"Health, versions, configuration, diagnostics.",risk:"Fleet-wide incident after bad deployment.",verify:"Pilot, phased deployment and rollback.",question:"How would you push firmware to 2,000 buses?"},
+maintenance:{title:"Physical maintenance",intro:"Field devices are physically distributed across vehicles and depots.",checks:"Spare strategy, repair process, installation quality.",risk:"Extended device downtime.",verify:"Maintenance and recovery KPIs.",question:"How do you maintain availability across a large bus fleet?"},
+time:{title:"Time synchronization",intro:"Timestamp consistency matters when events are combined into journeys and transfers.",checks:"Clock accuracy, sequencing, timestamp source.",risk:"Wrong journey/transfer relationship.",verify:"Time-sync test and event trace.",question:"Why are timestamps important in Bus→Metro fare processing?"}
+};
+
+function q(id){return document.getElementById(id)}
+function openModal(data){
+  q("modalEyebrow").textContent=data.eyebrow||"TECHNICAL DETAIL";
+  q("modalTitle").textContent=data.title||"Detail";
+  q("modalIntro").textContent=data.intro||"";
+  q("modalGrid").innerHTML=[
+    ["What changes",data.what],["Why it matters",data.why],["Technical checks",data.checks],["Typical risk",data.risk],["Technical Lead verifies",data.verify]
+  ].map(x=>`<div class="d"><b>${x[0]}</b><span>${x[1]||"See surrounding architecture."}</span></div>`).join("");
+  q("modal").classList.add("open"); q("modal").setAttribute("aria-hidden","false");
+}
+function closeModal(){q("modal").classList.remove("open");q("modal").setAttribute("aria-hidden","true")}
+q("modalClose").onclick=closeModal;
+q("modal").addEventListener("click",e=>{if(e.target===q("modal"))closeModal()});
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeModal()});
+
+q("pipeline").innerHTML=PIPE.map(x=>`<div class="step" data-pipe="${x[0]}"><b><span class="num">${x[0]}</span>${x[1]}</b><small>${x[2]}</small></div>`).join("");
+document.querySelectorAll("[data-pipe]").forEach(el=>el.onclick=()=>{
+  const p=PIPE.find(x=>x[0]===el.dataset.pipe);
+  openModal({eyebrow:"MIGRATION STAGE "+p[0],title:p[1],intro:p[2],what:p[2],why:"This stage reduces migration risk before the next stage begins.",checks:"Use requirements, evidence, data and clear exit criteria.",risk:"Moving forward with unresolved assumptions.",verify:"Document evidence, exceptions and go/no-go conditions.",question:"What would you verify before moving to the next migration stage?"});
+});
+
+document.querySelectorAll("[data-key]").forEach(el=>el.onclick=()=>openModal(DETAILS[el.dataset.key]||{title:el.textContent.trim(),intro:"Interactive architecture element."}));
+
+q("tapFlow").innerHTML=TAP.map((x,i)=>`${i?'<span class="flow-arrow">→</span>':''}<button class="flow-pill" data-tap="${i}">${x[0]}</button>`).join("");
+q("tapCards").innerHTML=TAP.map((x,i)=>`<div class="mini card"><h4>${i+1}. ${x[0]}</h4><p>${x[1]}</p><p class="smallnote">Key data: ${x[2]}</p></div>`).join("");
+document.querySelectorAll("[data-tap]").forEach(el=>el.onclick=()=>{
+  const x=TAP[+el.dataset.tap];
+  openModal({eyebrow:`TAP FLOW ${+el.dataset.tap+1}`,title:x[0],intro:x[1],what:x[1],why:"This stage forms the evidence chain for the next stage.",checks:x[2],risk:x[3],verify:x[4],question:x[5]});
+});
+
+q("compareBody").innerHTML=COMPARE.map(x=>`<tr data-compare='${JSON.stringify(x).replace(/'/g,"&#39;")}'><td><b>${x[0]}</b></td><td>${x[1]}</td><td>${x[2]}</td></tr>`).join("");
+document.querySelectorAll("[data-compare]").forEach(el=>el.onclick=()=>{
+  const x=JSON.parse(el.getAttribute("data-compare").replace(/&#39;/g,"'"));
+  openModal({eyebrow:"CBT vs ABT",title:x[0],intro:"The practical difference matters when reviewing vendor designs and migration strategy.",what:`CBT: ${x[1]} | ABT: ${x[2]}`,why:"The difference affects architecture, device requirements, migration and testing.",checks:"Review the requirement, architecture and evidence for the specific dimension.",risk:"Assuming the two models behave the same.",verify:"Trace the requirement into design and test evidence.",question:`What would you check for ${x[0].toLowerCase()}?`});
+});
+
+q("layers").innerHTML=LAYERS.map((x,i)=>`<div class="layer" data-layer="${i}"><div><b>${x[0]}</b><div class="smallnote">${x[1]}</div></div><div class="bar"><span style="width:${35+i*6}%"></span></div><div>›</div></div>`).join("");
+document.querySelectorAll("[data-layer]").forEach(el=>el.onclick=()=>{
+  const x=LAYERS[+el.dataset.layer];
+  openModal({eyebrow:"MIGRATION LAYER",title:x[0],intro:x[2],what:`Existing CBT: ${x[1]} | Target ABT: ${x[2]}`,why:"This layer changes or must be validated during transformation.",checks:x[3],risk:x[4],verify:x[5],question:`What would you check in the ${x[0].toLowerCase()} layer?`});
+});
+
+q("dataCards").innerHTML=DATA_CARDS.map(x=>`<div class="mini card" data-data="${x[0]}"><h4>${x[0]}</h4><p>${x[1]}</p><div class="smallnote" style="margin-top:8px"><b>Risk:</b> ${x[2]}</div></div>`).join("");
+q("dataCards").querySelectorAll("[data-data]").forEach((el,i)=>{
+  const x=DATA_CARDS[i];
+  el.onclick=()=>openModal({eyebrow:"DATA MIGRATION",title:x[0],intro:x[1],what:x[1],why:"Data mapping is needed because legacy and target models can structure information differently.",checks:x[3],risk:x[2],verify:"Validate source-to-target records and exceptions.",question:`How would you validate ${x[0].toLowerCase()} during migration?`});
+});
+
+q("wrongFareFlow").innerHTML=["BUS TAP","Timestamp","Credential / Account","Central ABT Platform","METRO TAP","Journey Processing","Fare Rule Version","Fare Calculation","Final Charge"].map((x,i)=>`${i?'<span class="flow-arrow">→</span>':''}<div class="flow-pill">${x}</div>`).join("");
+q("diagnosticSteps").innerHTML=DIAG.map((x,i)=>`<div class="mini card"><h4>${i+1}. ${x}</h4><p class="smallnote">${i<5?"Evidence check":"Processing check"}</p></div>`).join("");
+
+document.querySelectorAll("[data-bus]").forEach(el=>el.onclick=()=>{
+  const x=BUS[el.dataset.bus]; openModal({eyebrow:"BUS-SPECIFIC",title:x.title,intro:x.intro,what:x.intro,why:"Bus operations add mobile/fleet-specific complexity.",checks:x.checks,risk:x.risk,verify:x.verify,question:x.question});
+});
+
+q("testFlow").innerHTML=TESTS.map((x,i)=>`<div class="testnode" data-test="${i}"><b>${i+1}. ${x[0]}</b><small>${x[1]}</small></div>`).join("");
+document.querySelectorAll("[data-test]").forEach(el=>el.onclick=()=>{
+  const x=TESTS[+el.dataset.test];
+  openModal({eyebrow:"TESTING / COMMISSIONING",title:x[0],intro:x[1],what:x[2],why:"Each stage produces evidence for the next decision.",checks:x[3],risk:x[4],verify:"Use objective acceptance criteria and close critical defects.",question:`What would you verify during ${x[0]}?`});
+});
+
+q("controlFlow").innerHTML=["Requirement","Design","Compliance","Evidence","Testing","Defect","Corrective Action","Verification","Recommendation","Acceptance"].map((x,i)=>`${i?'<span class="flow-arrow">→</span>':''}<div class="flow-pill"><b>${x}</b></div>`).join("");
+q("reconFlow").innerHTML=["Validation Event","Journey","Fare","Account Charge","Payment / Settlement","Revenue","Reconciliation"].map((x,i)=>`${i?'<span class="flow-arrow">→</span>':''}<div class="flow-pill">${x}</div>`).join("");
+q("checklist").innerHTML=CHECKS.map(x=>`<div class="check"><h4>${x[0]}</h4><ul>${x[1].map(y=>`<li>${y}</li>`).join("")}</ul></div>`).join("");
+
+document.querySelectorAll(".nav button").forEach(b=>b.onclick=()=>document.getElementById(b.dataset.scroll).scrollIntoView({behavior:"smooth",block:"start"}));
+
+document.querySelectorAll("[data-depth]").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll("[data-depth]").forEach(x=>x.classList.remove("active")); b.classList.add("active");
+  const d=b.dataset.depth;
+  document.body.dataset.depth=d;
+  q("progressText").textContent=d==="deep"?"Deep technical view selected":d==="interview"?"Practical view selected":"Basic architecture view selected";
+});
+
+document.querySelectorAll("[data-focus]").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll("[data-focus]").forEach(x=>x.classList.remove("active")); b.classList.add("active");
+  const bus=b.dataset.focus==="bus";
+  document.querySelectorAll(".arch-right .mini").forEach(x=>x.style.opacity=bus?.95:1);
+  q("progressText").textContent=bus?"Bus focus selected":"All-system view selected";
+});
+
+const sections=[...document.querySelectorAll("main section")];
+const updateProgress=()=>{
+  const y=window.scrollY+window.innerHeight*.38;
+  let idx=0;
+  sections.forEach((s,i)=>{if(s.offsetTop<y)idx=i});
+  const pct=Math.round((idx+1)/sections.length*100);
+  q("heroProgress").style.width=pct+"%"; q("progressText").textContent=`Playbook progress: ${pct}%`;
+};
+window.addEventListener("scroll",updateProgress); updateProgress();
+</script>
+</body>
+</html>
